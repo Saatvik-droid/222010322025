@@ -13,6 +13,13 @@ async function fetchAllData(urls) {
   const results = await Promise.all(promises);
   return results;
 }
+function timeout(ms) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      reject(new Error(`Timeout after ${ms} milliseconds`));
+    }, ms);
+  });
+}
 
 app.get("/numbers", async (req, res) => {
   let urlArray = req.query.url;
@@ -31,7 +38,10 @@ app.get("/numbers", async (req, res) => {
     }
   });
 
-  const fetchedData = await fetchAllData(newUrlArray);
+  const promises = newUrlArray.map((url) =>
+    Promise.race([fetchData(url), timeout(5000)])
+  );
+  const fetchedData = await Promise.all(promises);
   console.log(fetchedData);
   fetchedData.forEach((numbers) => {
     console.log(numbers["numbers"]);
